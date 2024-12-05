@@ -1,0 +1,67 @@
+
+name: Build and Push
+on:
+  workflow_call:
+    inputs:
+      aws-region:
+        required: true
+        type: string
+        default: us-east-1
+      repo-name:
+        type: string
+        required: true
+
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION : ${{ inputs.aws-region }}
+  ECR_REPO_ADDRESS: 917902836630.dkr.ecr.us-east-1.amazonaws.com
+  ECR_REPO: 917902836630.dkr.ecr.us-east-1.amazonaws.com/${{ inputs.repo-name }}
+
+
+jobs:
+  Build_Push:
+    name: Docker Build and Push
+    runs-on: ubuntu-latest
+    outputs:
+      IMAGE_NAME: ${{ steps.sha.outputs.IMAGE_NAME }}
+      IMAGE_SHA: ${{ steps.sha.outputs.SHORT_SHA }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          repository: ChildMindInstitute/mindlogger-report-server
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::917902836630:role/cmiml-devops-oidc-github-role
+          role-session-name: gha-oidc-runner-${{ inputs.repo-name }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        run: |
+          aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ env.ECR_REPO_ADDRESS }}
+
+      - name: Generate short sha
+        id: sha
+        run: |
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          echo "SHORT_SHA=${SHORT_SHA}" >> $GITHUB_OUTPUT
+          echo "IMAGE_NAME=${ECR_REPO}:${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile
+          push: true
+          tags: |
+            ${{ env.ECR_REPO }}:latest
+            ${{ env.ECR_REPO }}:${{ steps.sha.outputs.IMAGE_SHA }}
+          platforms: linux/amd64,linux/arm64
+
+
