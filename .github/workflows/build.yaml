@@ -1,0 +1,27 @@
+
+name: Report Server Build Dev
+on:
+  push:
+
+
+concurrency:
+  cancel-in-progress: true
+  group: report-server-build-app
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION : "us-east-1"
+  ECR_REPO_ADDRESS: 917902836630.dkr.ecr.us-east-1.amazonaws.com
+  ECR_REPO: 917902836630.dkr.ecr.us-east-1.amazonaws.com/report-server
+
+
+jobs:
+  App_Build:
+    name: Docker Build and Push
+    uses: ChildMindInstitute/cmiml-devops/.github/workflows/build_push.yaml@adding-reusable-workflow
+    with:
+      repo-name: test-repo
+
