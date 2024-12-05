@@ -21,7 +21,7 @@ env:
 jobs:
   App_Build:
     name: Docker Build and Push
-    uses: ./.github/workflows/build_push.yaml@adding-reusable-workflow
+    uses: ./.github/workflows/build_push.yaml@main
     with:
       repo-name: test-repo
 
