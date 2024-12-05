@@ -26,9 +26,6 @@ jobs:
   Build_Push:
     name: Docker Build and Push
     runs-on: ubuntu-latest
-    outputs:
-      IMAGE_NAME: ${{ steps.sha.outputs.IMAGE_NAME }}
-      IMAGE_SHA: ${{ steps.sha.outputs.SHORT_SHA }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -50,8 +47,7 @@ jobs:
         id: sha
         run: |
           SHORT_SHA=$(git rev-parse --short HEAD)
-          echo "SHORT_SHA=${SHORT_SHA}" >> $GITHUB_OUTPUT
-          echo "IMAGE_NAME=${ECR_REPO}:${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+          echo "IMAGE_NAME=${ECR_REPO}:${SHORT_SHA}" >> $GITHUB_ENV
 
       - name: Build and push
         uses: docker/build-push-action@v5
@@ -61,7 +57,7 @@ jobs:
           push: true
           tags: |
             ${{ env.ECR_REPO }}:latest
-            ${{ env.ECR_REPO }}:${{ steps.sha.outputs.IMAGE_SHA }}
+            ${{ env.IMAGE_NAME }}
           platforms: linux/amd64,linux/arm64
 
 
