@@ -2,6 +2,8 @@
 name: Report Server Build Dev
 on:
   push:
+    branches:
+      - non-existent
 
 
 concurrency:
