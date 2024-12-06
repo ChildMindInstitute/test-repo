@@ -25,7 +25,7 @@ jobs:
           echo "image_name=${ECR_REPO}:RELEASE-rc-build-${SHORT_SHA}" >> $GITHUB_OUTPUT
 
   App_Build:
-    name: Docker Build and Push
+    name: Release Candidate
     uses: ./.github/workflows/build_push.yaml
     with:
       repo-name: test-repo
