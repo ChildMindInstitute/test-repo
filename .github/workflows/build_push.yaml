@@ -10,6 +10,10 @@ on:
       repo-name:
         type: string
         required: true
+      tag:
+        type: string
+        required: false
+        default: ${{ github.ref }}
 
 
 permissions:
@@ -50,7 +54,7 @@ jobs:
         id: sha
         run: |
           SHORT_SHA=$(git rev-parse --short HEAD)
-          echo "IMAGE_NAME=${ECR_REPO}:${SHORT_SHA}" >> $GITHUB_ENV
+          echo "IMAGE_NAME=${ECR_REPO}:${{ inputs.repo-name }}-${SHORT_SHA}" >> $GITHUB_ENV
 
       - name: Build and push
         uses: docker/build-push-action@v5
@@ -59,7 +63,6 @@ jobs:
           file: Dockerfile
           push: true
           tags: |
-            ${{ env.ECR_REPO }}:latest
             ${{ env.IMAGE_NAME }}
           platforms: linux/amd64,linux/arm64
 
