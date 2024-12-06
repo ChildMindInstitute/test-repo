@@ -27,6 +27,7 @@ jobs:
   App_Build:
     name: Release Candidate
     uses: ./.github/workflows/build_push.yaml
+    needs: Define_Tag
     with:
       repo-name: test-repo
       tag: ${{ needs.Define_Tag.outputs.image_name }}
