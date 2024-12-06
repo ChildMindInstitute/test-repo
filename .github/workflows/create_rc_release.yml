@@ -20,8 +20,9 @@ jobs:
       - name: Define Tag Name
         id: tag
         run: |
-          if [[ ${{ github.ref }} == 'release/'* ]]; then
-            RELEASE=$(echo {{ github.ref }} | cut -d'/' -f2)
+          branch=${GITHUB_REF##*/}
+          if [[ $branch == 'release/'* ]]; then
+            RELEASE=$(echo $branch | cut -d'/' -f2)
             echo "tag_value=$RELEASE-rc-build" >> $GITHUB_OUTPUT
           else
             echo "Branch don't match release pattern."
