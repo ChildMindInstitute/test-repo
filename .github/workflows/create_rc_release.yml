@@ -14,15 +14,19 @@ concurrency:
 jobs:
   Define_Tag:
     runs-on: ubuntu-latest
-    if: github.ref == 'release/*'
     outputs:
-      image_name: ${{ steps.tag.outputs.image_name }}
+      tag_value: ${{ steps.tag.outputs.tag_value }}
     steps:
       - name: Define Tag Name
         id: tag
         run: |
-          RELEASE=$(echo {{ github.ref }} | cut -d'/' -f2)
-          echo "image_name=${ECR_REPO}:RELEASE-rc-build-${SHORT_SHA}" >> $GITHUB_OUTPUT
+          if [[ ${{ github.ref }} == 'release/'* ]]; then
+            RELEASE=$(echo {{ github.ref }} | cut -d'/' -f2)
+            echo "tag_value=$RELEASE-rc-build" >> $GITHUB_OUTPUT
+          else
+            echo "Branch don't match release pattern."
+            exit 1
+          fi
 
   App_Build:
     name: Release Candidate
@@ -30,4 +34,4 @@ jobs:
     needs: Define_Tag
     with:
       repo-name: test-repo
-      tag: ${{ needs.Define_Tag.outputs.image_name }}
+      tag: ${{ needs.Define_Tag.outputs.tag_value }}
