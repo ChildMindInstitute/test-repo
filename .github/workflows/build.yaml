@@ -21,7 +21,7 @@ env:
 jobs:
   App_Build:
     name: Docker Build and Push
-    uses: ChildMindInstitute/.github/workflows/build_push.yaml@adding-reusable-workflow
+    uses: ChildMindInstitute/cmiml-devops/.github/workflows/build_push.yaml@adding-reusable-workflow
     with:
       repo-name: test-repo
 
