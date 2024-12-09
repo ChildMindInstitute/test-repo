@@ -29,6 +29,10 @@ jobs:
     outputs:
       tag_value: ${{ steps.tag.outputs.tag_value }}
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-tags: true
       - name: Define Tag Value
         id: tag
         run: |
