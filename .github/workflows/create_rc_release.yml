@@ -35,7 +35,7 @@ jobs:
       - name: Define Tag Value
         id: tag
         run: |
-          echo "RELEASE_BRANCH=$(echo ${{ github.ref }} | sed "s/refs\/.*\///g") >> $GITHUB_ENV
+          echo "RELEASE_BRANCH=$(echo ${{ github.ref }} | sed "s/refs\/.*\///g")" >> $GITHUB_ENV
           echo ${{ env.RELEASE_BRANCH }}
           current=$(git tag -l {{ env.RELEASE_BRANCH }}-rc\* --sort=creatordate | tail -n 1)
           echo $current
