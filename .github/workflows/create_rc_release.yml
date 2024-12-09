@@ -12,32 +12,33 @@ concurrency:
   group: report-server-build-app-rc
 
 jobs:
-  Allow_Run:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check Branch
-        run: |
-          if [[ ${{ github.ref }} == 'refs/heads/release/'* ]]; then
-            echo "Branch is valid to deploy a release candidate. Proceeding ..."
-          else
-            echo "Branch don't match release candidate branch pattern."
-            exit 1
-          fi
+  # Allow_Run:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Check Branch
+  #       run: |
+  #         if [[ ${{ github.ref }} == 'refs/heads/release/'* ]]; then
+  #           echo "Branch is valid to deploy a release candidate. Proceeding ..."
+  #         else
+  #           echo "Branch don't match release candidate branch pattern."
+  #           exit 1
+  #         fi
   Tagging:
     runs-on: ubuntu-latest
-    needs: Allow_Run
+    # needs: Allow_Run
     outputs:
       tag_value: ${{ steps.tag.outputs.tag_value }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-tags: true
+          
       - name: Define Tag Value
         id: tag
         run: |
           release_branch=$(echo ${{ github.ref }} | sed "s/refs\/.*\///g")
+          echo $release_branch
           current=$(git tag -l ${release_branch}-rc\* --sort=creatordate | tail -n 1)
+          echo $current
           if [[ -n $current ]]; then
             current_build=$(echo $current | awk -F 'rc' '{print $2}')
             echo "tag_value="${release_branch}-rc$((current_build + 1))" >> $GITHUB_OUTPUT
