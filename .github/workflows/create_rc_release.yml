@@ -12,20 +12,20 @@ concurrency:
   group: report-server-build-app-rc
 
 jobs:
-  # Allow_Run:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Check Branch
-  #       run: |
-  #         if [[ ${{ github.ref }} == 'refs/heads/release/'* ]]; then
-  #           echo "Branch is valid to deploy a release candidate. Proceeding ..."
-  #         else
-  #           echo "Branch don't match release candidate branch pattern."
-  #           exit 1
-  #         fi
+  Allow_Run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Branch
+        run: |
+          if [[ ${{ github.ref }} == 'refs/heads/release/'* ]]; then
+            echo "Branch is valid to deploy a release candidate. Proceeding ..."
+          else
+            echo "Branch don't match release candidate branch pattern."
+            exit 1
+          fi
   Tagging:
     runs-on: ubuntu-latest
-    # needs: Allow_Run
+    needs: Allow_Run
     outputs:
       tag_value: ${{ steps.tag.outputs.tag_value }}
     steps:
@@ -37,17 +37,22 @@ jobs:
       
       - name: Get Release
         run: |
-          echo RELEASE_BRANCH="$(echo ${{ github.ref }} | sed 's/refs\/heads\/release\///g')" >> $GITHUB_ENV
+          echo RELEASE_BRANCH="$(echo ${{ github.ref }} | sed 's/refs\/.*\///g')" >> $GITHUB_ENV
+      
+      - name: Get Current Tag
+        run: |
+          echo CURRENT_TAG="$(git tag -l ${{ env.RELEASE_BRANCH }}-rc\* --sort=creatordate | tail -n 1)" >> $GITHUB_ENV
 
       - name: Define Tag Value
         id: tag
         run: |
-          current_tag=$(git tag -l ${{ env.RELEASE_BRANCH }}-rc\* --sort=creatordate | tail -n 1)
-          if [[ -n $current_tag ]]; then
-            current_build=$(echo $current_tag | awk -F 'rc' '{print $2}')
+          if [[ -n ${{ env.CURRENT_TAG }} ]]; then
+            current_build=$(echo ${{ env.CURRENT_TAG }} | awk -F 'rc' '{print $2}')
             echo tag_value="${{ env.RELEASE_BRANCH }}-rc$((current_build + 1))" >> $GITHUB_OUTPUT
+            echo BUILD_NUMBER="$current_build" >> $GITHUB_ENV
           else
             echo tag_value="${{ env.RELEASE_BRANCH }}-rc1" >> $GITHUB_OUTPUT
+            echo BUILD_NUMBER="1" >> $GITHUB_ENV
           fi
         shell: bash
       - name: Push tag to Repository
@@ -56,6 +61,22 @@ jobs:
           git config --global user.email "automateduser@mindlogger"
           git tag ${{ steps.tag.outputs.tag_value }}
           git push origin ${{ steps.tag.outputs.tag_value }}
+      
+      - name: Generate Release Notes
+        run: |
+          RELEASE_NOTES=$(gh api \
+          --method POST \
+          -H "Accept: application/vnd.github+json" \
+          -H "X-GitHub-Api-Version: 2022-11-28" \
+          /repos/ChildMindInstitute/${{ github.repository }}/releases/generate-notes \
+          -f "tag_name=${{ steps.tag.outputs.tag_value }}" -f "target_commitish=${{ github.ref }}" -f "previous_tag_name=${{ env.CURRENT_TAG }}")
+
+          gh api \
+          --method POST \
+          -H "Accept: application/vnd.github+json" \
+          -H "X-GitHub-Api-Version: 2022-11-28" \
+          /repos/ChildMindInstitute/${{ github.repository }}/releases \
+          -f "tag_name=${{ steps.tag.outputs.tag_value }}" -f "target_commitish=${{ github.ref }}" -f "name=Release Candidate #${{ env.BUILD_NUMBER }}" -f "body=$RELEASE_NOTES" -F "draft=false" -F "prerelease=true" -F "generate_release_notes=false"
 
   App_Build:
     name: Release Candidate
