@@ -12,26 +12,45 @@ concurrency:
   group: report-server-build-app-rc
 
 jobs:
-  Define_Tag:
+  Allow_Run:
     runs-on: ubuntu-latest
+    steps:
+      - name: Check Branch
+        run: |
+          if [[ ${{ github.ref }} == 'refs/heads/release/'* ]]; then
+            echo "Branch is valid to deploy a release candidate. Proceeding ..."
+          else
+            echo "Branch don't match release candidate branch pattern."
+            exit 1
+          fi
+  Tagging:
+    runs-on: ubuntu-latest
+    needs: Allow_Run
     outputs:
       tag_value: ${{ steps.tag.outputs.tag_value }}
     steps:
-      - name: Define Tag Name
+      - name: Define Tag Value
         id: tag
         run: |
-          if [[ ${{ github.ref }} == 'refs/heads/release/'* ]]; then
-            RELEASE=$(echo ${{ github.ref }} | sed "s/refs\/.*\///g")
-            echo "tag_value=$RELEASE-rc-build" >> $GITHUB_OUTPUT
+          release_branch=$(echo ${{ github.ref }} | sed "s/refs\/.*\///g")
+          current=$(git tag -l ${release_branch}-rc\* --sort=creatordate | tail -n 1)
+          if [[ -n $current ]]; then
+            current_build=$(echo $current | awk -F 'rc' '{print $2}')
+            echo "tag_value="${release_branch}-rc$((current_build + 1))" >> $GITHUB_OUTPUT
           else
-            echo "Branch don't match release pattern."
-            exit 1
+            echo "tag_value="${release_branch}-rc1" >> $GITHUB_OUTPUT
           fi
+      - name: Push tag to Repository
+        run: |
+          git config --global user.name "${{ github.event.commmits[0].author.name }}"
+          git config --global user.email "${{ github.event.commmits[0].author.email }}"
+          git tag ${{ steps.tag.outputs.tag_value }}
+          git push origin ${{ steps.tag.outputs.tag_value }}
 
   App_Build:
     name: Release Candidate
     uses: ./.github/workflows/build_push.yaml
-    needs: Define_Tag
+    needs: Tagging
     with:
       repo-name: test-repo
       tag: ${{ needs.Define_Tag.outputs.tag_value }}
