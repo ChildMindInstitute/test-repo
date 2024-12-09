@@ -57,4 +57,4 @@ jobs:
     needs: Tagging
     with:
       repo-name: test-repo
-      tag: ${{ needs.Define_Tag.outputs.tag_value }}
+      tag: ${{ needs.Tagging.outputs.tag_value }}
