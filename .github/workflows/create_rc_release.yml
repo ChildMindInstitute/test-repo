@@ -37,18 +37,18 @@ jobs:
         run: |
           release_branch=$(echo ${{ github.ref }} | sed "s/refs\/.*\///g")
           echo $release_branch
-          current=$(git tag -l ${release_branch}-rc\* --sort=creatordate | tail -n 1)
+          current=$(git tag -l $release_branch-rc\* --sort=creatordate | tail -n 1)
           echo $current
           if [[ -n $current ]]; then
             current_build=$(echo $current | awk -F 'rc' '{print $2}')
-            echo "tag_value="${release_branch}-rc$((current_build + 1))" >> $GITHUB_OUTPUT
+            echo "tag_value="$release_branch-rc$((current_build + 1))" >> $GITHUB_OUTPUT
           else
-            echo "tag_value="${release_branch}-rc1" >> $GITHUB_OUTPUT
+            echo "tag_value="$release_branch-rc1" >> $GITHUB_OUTPUT
           fi
       - name: Push tag to Repository
         run: |
-          git config --global user.name "${{ github.event.commits[0].author.name }}"
-          git config --global user.email "${{ github.event.commits[0].author.email }}"
+          git config --global user.name "Automated User"
+          git config --global user.email "automateduser@mindlogger"
           git tag ${{ steps.tag.outputs.tag_value }}
           git push origin ${{ steps.tag.outputs.tag_value }}
 
