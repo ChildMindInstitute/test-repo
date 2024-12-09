@@ -37,7 +37,7 @@ jobs:
         run: |
           RELEASE_BRANCH=$(echo ${{ github.ref }} | sed 's/refs\/heads\/release\///g')
           echo "$RELEASE_BRANCH"
-          current=$(git tag -l \$RELEASE_BRANCH-rc\* --sort=creatordate | tail -n 1)
+          current=$(git tag -l $RELEASE_BRANCH-rc\* --sort=creatordate | tail -n 1)
           echo $current
           if [[ -n $current ]]; then
             current_build=$(echo $current | awk -F 'rc' '{print $2}')
@@ -45,6 +45,7 @@ jobs:
           else
             echo "tag_value="$RELEASE_BRANCH-rc1" >> $GITHUB_OUTPUT
           fi
+        shell: bash
       - name: Push tag to Repository
         run: |
           git config --global user.name "Automated User"
