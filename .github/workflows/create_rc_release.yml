@@ -31,6 +31,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
       
       - name: Get Release
         run: |
@@ -40,10 +43,8 @@ jobs:
         id: tag
         run: |
           current_tag=$(git tag -l ${{ env.RELEASE_BRANCH }}-rc\* --sort=creatordate | tail -n 1)
-          echo $current_tag
           if [[ -n $current_tag ]]; then
             current_build=$(echo $current_tag | awk -F 'rc' '{print $2}')
-            echo $current_build
             echo tag_value="${{ env.RELEASE_BRANCH }}-rc$((current_build + 1))" >> $GITHUB_OUTPUT
           else
             echo tag_value="${{ env.RELEASE_BRANCH }}-rc1" >> $GITHUB_OUTPUT
