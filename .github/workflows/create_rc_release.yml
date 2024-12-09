@@ -46,8 +46,8 @@ jobs:
           fi
       - name: Push tag to Repository
         run: |
-          git config --global user.name "${{ github.event.commmits[0].author.name }}"
-          git config --global user.email "${{ github.event.commmits[0].author.email }}"
+          git config --global user.name "${{ github.event.commits[0].author.name }}"
+          git config --global user.email "${{ github.event.commits[0].author.email }}"
           git tag ${{ steps.tag.outputs.tag_value }}
           git push origin ${{ steps.tag.outputs.tag_value }}
 
