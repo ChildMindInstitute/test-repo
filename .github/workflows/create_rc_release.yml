@@ -69,14 +69,14 @@ jobs:
           -H "Accept: application/vnd.github+json" \
           -H "X-GitHub-Api-Version: 2022-11-28" \
           /repos/${{ github.repository }}/releases/generate-notes \
-          -f "tag_name=${{ steps.tag.outputs.tag_value }}" -f "target_commitish=${{ github.ref }}" -f "previous_tag_name=${{ env.CURRENT_TAG }}" | jq '.body' | sed 's/\\"//g' | sed 's/"//g')
+          -f "tag_name=${{ steps.tag.outputs.tag_value }}" -f "target_commitish=${{ github.ref }}" -f "previous_tag_name=${{ env.CURRENT_TAG }}" | jq -r .'body' | sed 's/\\n/\n/g')
 
           gh api \
           --method POST \
           -H "Accept: application/vnd.github+json" \
           -H "X-GitHub-Api-Version: 2022-11-28" \
           /repos/${{ github.repository }}/releases \
-          -f "tag_name=${{ steps.tag.outputs.tag_value }}" -f "target_commitish=${{ github.ref }}" -f "name=Release Candidate #${{ env.BUILD_NUMBER }}" -f "body=$RELEASE_NOTES" -F "draft=false" -F "prerelease=true" -F "generate_release_notes=false"
+          -f "tag_name=${{ steps.tag.outputs.tag_value }}" -f "target_commitish=${{ github.ref }}" -f "name=Release Candidate #${{ env.BUILD_NUMBER }} (${{ env.RELEASE_BRANCH }})" -f "body=$RELEASE_NOTES" -F "prerelease=true"
         env:
           GH_TOKEN: ${{ github.token }}
 
