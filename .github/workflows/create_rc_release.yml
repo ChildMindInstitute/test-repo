@@ -35,15 +35,15 @@ jobs:
       - name: Define Tag Value
         id: tag
         run: |
-          release_branch=$(echo ${{ github.ref }} | sed "s/refs\/.*\///g")
-          echo $release_branch
-          current=$(git tag -l $release_branch-rc\* --sort=creatordate | tail -n 1)
+          echo "RELEASE_BRANCH=$(echo ${{ github.ref }} | sed "s/refs\/.*\///g") >> $GITHUB_ENV
+          echo $RELEASE_BRANCH
+          current=$(git tag -l ${{ env.RELEASE_BRANCH }}-rc\* --sort=creatordate | tail -n 1)
           echo $current
           if [[ -n $current ]]; then
             current_build=$(echo $current | awk -F 'rc' '{print $2}')
-            echo "tag_value="$release_branch-rc$((current_build + 1))" >> $GITHUB_OUTPUT
+            echo "tag_value="${{ env.RELEASE_BRANCH }}-rc$((current_build + 1))" >> $GITHUB_OUTPUT
           else
-            echo "tag_value="$release_branch-rc1" >> $GITHUB_OUTPUT
+            echo "tag_value="${{ env.RELEASE_BRANCH }}-rc1" >> $GITHUB_OUTPUT
           fi
       - name: Push tag to Repository
         run: |
