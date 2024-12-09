@@ -31,11 +31,15 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+      
+      - name: Get Release
+        run: |
+          echo RELEASE_BRANCH="$(echo ${{ github.ref }} | sed 's/refs\/heads\/release\///g')" >> $GITHUB_ENV
           
       - name: Define Tag Value
         id: tag
         run: |
-          echo RELEASE_BRANCH="$(echo ${{ github.ref }} | sed 's/refs\/heads\/release\///g')" >> $GITHUB_ENV
+          
           echo ${{ env.RELEASE_BRANCH }}
           current="$(git tag -l ${{ env.RELEASE_BRANCH }}\* --sort=creatordate | tail -n 1)"
           echo $current
