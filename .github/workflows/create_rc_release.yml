@@ -35,13 +35,13 @@ jobs:
       - name: Get Release
         run: |
           echo RELEASE_BRANCH="$(echo ${{ github.ref }} | sed 's/refs\/heads\/release\///g')" >> $GITHUB_ENV
-          
+
       - name: Define Tag Value
         id: tag
         run: |
           
           echo ${{ env.RELEASE_BRANCH }}
-          current="$(git tag -l ${{ env.RELEASE_BRANCH }}\* --sort=creatordate | tail -n 1)"
+          current="$(git tag -l ${{ env.RELEASE_BRANCH }}-rc\* --sort=creatordate | tail -n 1)"
           echo $current
           if [[ -n $current ]]; then
             current_build=$(echo $current | awk -F 'rc' '{print $2}')
