@@ -22,7 +22,7 @@ jobs:
     steps:
       - name: Check Branch
         run: |
-          if [[ ${{ github.event.pull_request.head.ref }} == 'refs/heads/release/'* ]]; then
+          if [[ ${{ github.event.pull_request.head.ref }} == 'release/'* ]]; then
             echo "Branch is valid to deploy a production image. Proceeding ..."
           else
             echo "Branch don't match production branch pattern."
