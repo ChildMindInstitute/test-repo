@@ -32,7 +32,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: Allow_Run
     outputs:
-      tag_value: ${{ steps.tag.outputs.release_tag }}
+      release_tag: ${{ steps.tag.outputs.release_tag }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -43,7 +43,7 @@ jobs:
       - name: Get Release Tag
         id: tag
         run: |
-          echo release_tag="$(echo ${{ github.event.pull_request.head.ref }} | sed 's/refs\/.*\///g')" >> $GITHUB_OUTPUT
+          echo release_tag="$(echo ${{ github.event.pull_request.head.ref }} | sed 's/release\///g')" >> $GITHUB_OUTPUT
 
       - name: Get Latest Release
         run: |
