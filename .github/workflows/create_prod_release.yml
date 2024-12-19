@@ -1,11 +1,12 @@
 
 name: Create Production Release
 on:
-  pull_request_target:
-    types:
-      - closed
-    branches:
-      - main
+  workflow_dispatch: {}
+  # pull_request_target:
+  #   types:
+  #     - closed
+  #   branches:
+  #     - main
 
 permissions:
   id-token: write

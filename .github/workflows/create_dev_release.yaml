@@ -2,9 +2,9 @@
 name: Report Server Build Dev
 on:
   workflow_dispatch: {}
-  push:
-    branches:
-      - dev
+  # push:
+  #   branches:
+  #     - dev
 
 
 concurrency:
@@ -14,12 +14,6 @@ concurrency:
 permissions:
   id-token: write
   contents: read
-
-env:
-  AWS_REGION : "us-east-1"
-  ECR_REPO_ADDRESS: 917902836630.dkr.ecr.us-east-1.amazonaws.com
-  ECR_REPO: 917902836630.dkr.ecr.us-east-1.amazonaws.com/report-server
-
 
 jobs:
   App_Build:
@@ -60,3 +54,40 @@ jobs:
           service: report-server
           cluster: cmiml-dev
           wait-for-service-stability: true
+  
+  Slack-Notification:
+    needs:
+      - App_Build
+      - Deploy
+    if: success() || failure()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Format Slack Message (Failed)
+        if: failure()
+        run: |
+          sed -i "s|\${APP}|Report Server|g" .github/configs/failed_deploy.json
+          sed -i "s|\${ENVIRONMENT}|dev|g" .github/configs/failed_deploy.json
+          sed -i "s|\${IMAGE}|${{ needs.App_Build.outputs.image }}|g" .github/configs/failed_deploy.json
+
+          echo JSON_PAYLOAD=$(cat .github/configs/failed_deploy.json) >> $GITHUB_ENV
+      
+      - name: Format Slack Message (Success)
+        if: success()
+        run: |
+          sed -i "s|\${APP}|Report Server|g" .github/configs/successfull_deploy.json
+          sed -i "s|\${ENVIRONMENT}|dev|g" .github/configs/successfull_deploy.json
+          sed -i "s|\${IMAGE}|${{ needs.App_Build.outputs.image }}|g" .github/configs/successfull_deploy.json
+
+          echo JSON_PAYLOAD=$(cat .github/configs/successfull_deploy.json) >> $GITHUB_ENV
+        shell: bash
+      - name: Send Slack Message
+        uses: slackapi/slack-github-action@v1.27.0
+        with:
+          payload: |
+            ${{ env.JSON_PAYLOAD }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.CODE_GURU_REPORTS_WEBHOOK }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
