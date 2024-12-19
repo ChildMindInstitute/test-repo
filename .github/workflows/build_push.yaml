@@ -60,7 +60,7 @@ jobs:
         id: image
         run: |
           SHORT_SHA=$(git rev-parse --short HEAD)
-          echo "RELEASE_IMAGE=${{ inputs.tag }}-build-${SHORT_SHA}" >> $GITHUB_OUTPUT
+          echo "RELEASE_IMAGE=${ECR_REPO}:${{ inputs.tag }}-build-${SHORT_SHA}" >> $GITHUB_OUTPUT
           echo "IMAGE_NAME=${ECR_REPO}:${{ inputs.tag }}-build-${SHORT_SHA}" >> $GITHUB_ENV
 
       - name: Build and push
