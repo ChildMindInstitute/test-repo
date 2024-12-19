@@ -25,7 +25,6 @@ jobs:
 
   Deploy:
     needs: App_Build
-    name: Deploy to Dev
     runs-on: ubuntu-latest
     steps:
       - name: configure aws credentials
@@ -55,11 +54,11 @@ jobs:
           cluster: cmiml-dev
           wait-for-service-stability: true
   
-  Slack-Notification:
+  Failed-Notification:
     needs:
       - App_Build
       - Deploy
-    if: success() || failure()
+    if: failure()
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -73,9 +72,27 @@ jobs:
           sed -i "s|\${IMAGE}|${{ needs.App_Build.outputs.image }}|g" .github/configs/failed_deploy.json
 
           echo JSON_PAYLOAD=$(cat .github/configs/failed_deploy.json) >> $GITHUB_ENV
-      
+        shell: bash
+      - name: Send Slack Message
+        uses: slackapi/slack-github-action@v1.27.0
+        with:
+          payload: |
+            ${{ env.JSON_PAYLOAD }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.CODE_GURU_REPORTS_WEBHOOK }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+  
+  Success-Notification:
+    needs:
+      - App_Build
+      - Deploy
+    if: success()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Format Slack Message (Success)
-        if: success()
         run: |
           sed -i "s|\${APP}|Report Server|g" .github/configs/successfull_deploy.json
           sed -i "s|\${ENVIRONMENT}|dev|g" .github/configs/successfull_deploy.json

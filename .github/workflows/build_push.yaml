@@ -2,6 +2,9 @@
 name: Build and Push
 on:
   workflow_call:
+    outputs:
+      image:
+        value: ${{ jobs.Build_Push.outputs.image }}
     inputs:
       aws-region:
         required: false
