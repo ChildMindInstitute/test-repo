@@ -9,7 +9,7 @@ on:
 
 concurrency:
   cancel-in-progress: true
-  group: report-server-build-app
+  group: report-server-build-app-dev
 
 permissions:
   id-token: write
