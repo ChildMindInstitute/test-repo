@@ -1,5 +1,5 @@
 
-name: Report Server Build Dev
+name: Create Dev Release
 on:
   workflow_dispatch: {}
   # push:
