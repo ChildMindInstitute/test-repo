@@ -75,9 +75,41 @@ jobs:
           GH_TOKEN: ${{ github.token }}
 
   App_Build:
-    name: Release Candidate
+    name: Production Release
     uses: ./.github/workflows/build_push.yaml
     needs: Tagging
     with:
       repo-name: test-repo
       tag: ${{ needs.Tagging.outputs.release_tag }}
+
+  Deploy:
+    needs: App_Build
+    name: Deploy to Prod
+    runs-on: ubuntu-latest
+    steps:
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::410431445687:role/cmiml-dev-oidc-github-role
+          role-session-name: OIDC-GHA-session
+          aws-region: us-east-1
+
+      - name: Download task definition
+        run: |
+          aws ecs describe-task-definition --task-definition report_server --query taskDefinition > task-definition.json
+
+      - name: Render Amazon ECS task definition
+        id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          container-name: report_server
+          image: ${{ needs.App_Build.outputs.image }}
+
+      - name: Update Task Definition
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.task-def.outputs.task-definition }}
+          service: report-server
+          cluster: cmiml-prod
+          wait-for-service-stability: true

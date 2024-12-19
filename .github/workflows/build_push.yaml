@@ -23,13 +23,15 @@ permissions:
 env:
   AWS_REGION : ${{ inputs.aws-region }}
   ECR_REPO_ADDRESS: 917902836630.dkr.ecr.us-east-1.amazonaws.com
-  ECR_REPO: 917902836630.dkr.ecr.us-east-1.amazonaws.com/${{ inputs.repo-name }}
+  ECR_REPO: 917902836630.dkr.ecr.us-east-1.amazonaws.com/report-server
 
 
 jobs:
   Build_Push:
     name: Docker Build and Push
     runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.image.outputs.RELEASE_IMAGE }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -50,10 +52,11 @@ jobs:
         run: |
           aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ env.ECR_REPO_ADDRESS }}
 
-      - name: Generate short sha
-        id: sha
+      - name: Generate image name
+        id: image
         run: |
           SHORT_SHA=$(git rev-parse --short HEAD)
+          echo "RELEASE_IMAGE=${{ inputs.tag }}-build-${SHORT_SHA}" >> $GITHUB_OUTPUT
           echo "IMAGE_NAME=${ECR_REPO}:${{ inputs.tag }}-build-${SHORT_SHA}" >> $GITHUB_ENV
 
       - name: Build and push
