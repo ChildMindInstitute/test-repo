@@ -4,7 +4,7 @@
 			"type": "header",
 			"text": {
 				"type": "plain_text",
-				"text": ":tada: ${APP} Successfull Deploy",
+				"text": ":tada: ${APP} Successful Deploy",
 				"emoji": true
 			}
 		},

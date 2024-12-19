@@ -94,11 +94,11 @@ jobs:
 
       - name: Format Slack Message (Success)
         run: |
-          sed -i "s|\${APP}|Report Server|g" .github/configs/successfull_deploy.json
-          sed -i "s|\${ENVIRONMENT}|dev|g" .github/configs/successfull_deploy.json
-          sed -i "s|\${IMAGE}|${{ needs.App_Build.outputs.short-image }}|g" .github/configs/successfull_deploy.json
+          sed -i "s|\${APP}|Report Server|g" .github/configs/successful_deploy.json
+          sed -i "s|\${ENVIRONMENT}|dev|g" .github/configs/successful_deploy.json
+          sed -i "s|\${IMAGE}|${{ needs.App_Build.outputs.short-image }}|g" .github/configs/successful_deploy.json
 
-          echo JSON_PAYLOAD=$(cat .github/configs/successfull_deploy.json) >> $GITHUB_ENV
+          echo JSON_PAYLOAD=$(cat .github/configs/successful_deploy.json) >> $GITHUB_ENV
         shell: bash
       - name: Send Slack Message
         uses: slackapi/slack-github-action@v1.27.0
