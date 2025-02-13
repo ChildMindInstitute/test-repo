@@ -50,12 +50,12 @@ jobs:
       - name: Define Tag Value
         id: tag
         run: |
-          if [[ -n ${CURRENT_TAG } ]]; then
-            current_build=$(echo ${{ env.CURRENT_TAG }} | awk -F 'rc' '{print $2}')
-            echo tag_value="${{ env.RELEASE_BRANCH }}-rc$((current_build + 1))" >> $GITHUB_OUTPUT
+          if [[ -n "${CURRENT_TAG}" ]]; then
+            current_build=$(echo "${CURRENT_TAG}" | awk -F 'rc' '{print $2}')
+            echo tag_value="${RELEASE_BRANCH}-rc$((current_build + 1))" >> $GITHUB_OUTPUT
             echo BUILD_NUMBER="$current_build" >> $GITHUB_ENV
           else
-            echo tag_value="${{ env.RELEASE_BRANCH }}-rc1" >> $GITHUB_OUTPUT
+            echo tag_value="${RELEASE_BRANCH}-rc1" >> $GITHUB_OUTPUT
             echo BUILD_NUMBER="1" >> $GITHUB_ENV
           fi
         shell: bash
