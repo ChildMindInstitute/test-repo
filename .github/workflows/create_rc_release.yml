@@ -34,7 +34,9 @@ jobs:
         with:
           fetch-depth: 0
           fetch-tags: true
-      
+      - name: debug1
+        run: |
+          echo ${{ github.ref }}
       - name: Get Release
         run: |
           echo RELEASE_BRANCH="$(echo ${{ github.ref }} | sed 's/refs\/.*\///g')" >> $GITHUB_ENV
