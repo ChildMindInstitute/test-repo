@@ -53,6 +53,7 @@ jobs:
           if [[ -n "${CURRENT_TAG}" ]]; then
             current_build=$(echo "${CURRENT_TAG}" | awk -F 'rc' '{print $2}')
             BUILD_NUM=$((current_build + 1))
+            echo "Current build: ${BUILD_NUM}"
             echo tag_value="${RELEASE_BRANCH}-rc${BUILD_NUM}" >> $GITHUB_OUTPUT
             echo BUILD_NUMBER="${BUILD_NUM}" >> $GITHUB_ENV
           else
@@ -90,7 +91,6 @@ jobs:
     uses: ./.github/workflows/build_push.yaml
     needs: Tagging
     with:
-      repo-name: test-repo
       tag: ${{ needs.Tagging.outputs.tag_value }}
 
   Deploy:
