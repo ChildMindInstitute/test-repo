@@ -37,8 +37,6 @@ if [[ $RESPONSE =~ ^([yY][eE][sS]|[yY])$ ]]; then
   gh pr create --base main --head "$BRANCH_NAME" --title "Release - $RELEASE_VERSION" --fill
 
 else
-
     message "Action cancelled exiting..."
     exit 1
-
 fi
