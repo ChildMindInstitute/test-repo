@@ -59,7 +59,7 @@ if [[ $RESPONSE =~ ^([yY][eE][sS]|[yY])$ ]]; then
 
   git checkout -b "$BRANCH_NAME" develop
   git push origin "$BRANCH_NAME"
-  gh pr create --base main --head "$BRANCH_NAME" --title "Release - $RELEASE_VERSION" --fill
+  gh pr create --base main --head "$BRANCH_NAME" --title "Release - $RC_VERSION" --fill
 
 else
     message "Action cancelled exiting..."
