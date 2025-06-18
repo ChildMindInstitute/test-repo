@@ -54,12 +54,12 @@ message ">>> Release: ${RC_VERSION}"
 read -r -p "Last release version was '$RELEASE_VERSION', last RC was '$PREVIOUS_RC', do you want to create '$RC_VERSION' [Y/n]:  " RESPONSE
 if [[ $RESPONSE =~ ^([yY][eE][sS]|[yY])$ ]]; then
 
-  BRANCH_NAME="release/$RELEASE_VERSION"
+  BRANCH_NAME="release/$RC_VERSION"
   message ">>>>> Creating branch '$BRANCH_NAME' from develop..."
 
   git checkout -b "$BRANCH_NAME" develop
   git push origin "$BRANCH_NAME"
-  gh pr create --base main --head "$BRANCH_NAME" --title "Release - $RELEASE_VERSION" --fill
+  gh pr create --base main --head "$BRANCH_NAME" --title "Release - $RC_VERSION" --fill
 
 else
     message "Action cancelled exiting..."
