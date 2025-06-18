@@ -10,21 +10,35 @@ message() {
 getReleaseVersion() {
   # 1. Create array based on LATEST_TAG
 #  LATEST_TAG=$(git describe --tags "$(git rev-list --tags --max-count=1)") # gets tags across all branches, not just the current branch
-  LATEST_TAG=$(gh release list --exclude-drafts --exclude-pre-releases --json tagName,isLatest | jq -r '.[] | select(.isLatest == true) | .tagName')
+  LATEST_TAG=$(gh release list --json tagName,isLatest | jq -r '[.[] | select(.isLatest == false)][0].tagName')
+
   TAG_LIST=($(echo "$LATEST_TAG" | tr '.' ' '))
 
   # 2. Exit if invalid version
   [[ "${#TAG_LIST[@]}" -ne 3 ]] && echo "$LATEST_TAG is not a valid version" && exit 1
 
+  RC_TAG=($(echo "${TAG_LIST[2]}" | tr '-' ' '))
+
+  # If the last tag was an RC, increment the tag
+  V_RC="1"
+  if [ "${RC_TAG[1]+set}" ]; then
+    OLD_RC=$(echo "${RC_TAG[1]}" | grep -o '[0-9]\+$')
+    V_RC=$((  OLD_RC + 1 ))
+  fi
+
   # 3. Calculate release version
   V_DATE=$(date +%Y)
   V_MONTH=$(date +%m)
   LAST_MONTH=${TAG_LIST[1]}
-#  LAST_MONTH="06"
   V_PATCH=0
-  [[ LAST_MONTH -eq V_MONTH ]] && V_PATCH=$(( TAG_LIST[2] + 1 ))
+  # When month rolls over, reset RC
+  if [[ LAST_MONTH -eq V_MONTH ]]; then
+   V_PATCH=$(( TAG_LIST[2] + 1 ))
+  else
+    V_RC=1
+  fi
 
-  RELEASE_VERSION=${V_DATE}.${V_MONTH}.${V_PATCH}
+  RELEASE_VERSION=${V_DATE}.${V_MONTH}.${V_PATCH}-rc${V_RC}
 }
 
 message ">>> Starting release"
