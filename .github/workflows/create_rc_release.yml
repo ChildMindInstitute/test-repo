@@ -1,31 +1,39 @@
 
 name: Create Release Candidate
 on:
-  workflow_dispatch: {}
+#  workflow_dispatch: {}
+  pull_request:
+    types: [ opened, synchronize, reopened ]
+    branches: [ main ]
 
 permissions:
   id-token: write
   contents: write
+
 
 concurrency:
   cancel-in-progress: true
   group: report-server-build-app-rc
 
 jobs:
-  Allow_Run:
+  should-run:
     runs-on: ubuntu-latest
+    if: contains(toJSON(github.head_ref), 'release/') || contains(toJSON(github.head_ref), 'hotfix/')
     steps:
-      - name: Check Branch
-        run: |
-          if [[ ${{ github.ref }} == 'refs/heads/release/'* ]]; then
-            echo "Branch is valid to deploy a release candidate. Proceeding ..."
-          else
-            echo "Branch don't match release candidate branch pattern."
-            exit 1
-          fi
+      - run: |
+          echo "Branch is valid to deploy a release candidate. Proceeding ..."
+#    steps:
+#      - name: Check Branch
+#        run: |
+#          if [[ ${{ github.ref }} == 'refs/heads/release/'* ]]; then
+#            echo "Branch is valid to deploy a release candidate. Proceeding ..."
+#          else
+#            echo "Branch don't match release candidate branch pattern."
+#            exit 1
+#          fi
   Tagging:
     runs-on: ubuntu-latest
-    needs: Allow_Run
+    needs: should-run
     outputs:
       tag_value: ${{ steps.tag.outputs.tag_value }}
     steps:
