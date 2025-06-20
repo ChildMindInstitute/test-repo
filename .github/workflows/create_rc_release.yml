@@ -21,10 +21,15 @@ concurrency:
 jobs:
   should-run:
     runs-on: ubuntu-latest
-    if: contains(toJSON(github.head_ref), 'release/') || contains(toJSON(github.head_ref), 'hotfix/')
+    if: github.event.pull_request.merged == true && (contains(toJSON(github.event.pull_request.head.ref), 'release/') || contains(toJSON(github.event.pull_request.head.ref), 'hotfix/'))
     steps:
       - run: |
-          echo "Branch is valid to deploy a release candidate. Proceeding ..."
+          if [[ echo '${{ github.event.pull_request.head.ref }}' | grep -E -e '-rc[0-9]+' ]]; then
+            echo "Branch is valid to deploy a release candidate. Proceeding ..."
+          else
+            echo "Branch does not match release candidate branch pattern."
+            exit 1
+          fi
 #    steps:
 #      - name: Check Branch
 #        run: |
@@ -47,103 +52,81 @@ jobs:
           JOB_CONTEXT: ${{ toJson(job) }}
         run: echo "$JOB_CONTEXT"
 
-#  tag:
-#    runs-on: ubuntu-latest
-#    needs: should-run
-#    outputs:
-#      tag_value: ${{ steps.tag.outputs.tag_value }}
-#    steps:
-#      - name: Checkout repository
-#        uses: actions/checkout@v4
-#        with:
-#          fetch-depth: 0
-#          fetch-tags: true
-#
-#      - name: Get Release
-#        run: |
-#          echo RELEASE_BRANCH="$(echo ${{ github.ref }} | sed 's/refs\/.*\///g')" >> $GITHUB_ENV
-#
-#      - name: Get Current Release Tag
-#        run: |
-#          echo CURRENT_TAG="$(git tag -l ${{ env.RELEASE_BRANCH }}-rc\* --sort=creatordate | tail -n 1)" >> $GITHUB_ENV
-#
-#      - name: Get Latest Release
-#        run: |
-#          echo LATEST_RELEASE="$(git tag -l --sort=creatordate | tee | grep -v rc | tail -n 1)" >> $GITHUB_ENV
-#
-#      - name: Define Tag Value
-#        id: tag
-#        run: |
-#          if [[ -n "${CURRENT_TAG}" ]]; then
-#            current_build=$(echo "${CURRENT_TAG}" | awk -F 'rc' '{print $2}')
-#            BUILD_NUM=$((current_build + 1))
-#            echo "Current build: ${BUILD_NUM}"
-#            echo tag_value="${RELEASE_BRANCH}-rc${BUILD_NUM}" >> $GITHUB_OUTPUT
-#            echo BUILD_NUMBER="${BUILD_NUM}" >> $GITHUB_ENV
-#          else
-#            echo tag_value="${RELEASE_BRANCH}-rc1" >> $GITHUB_OUTPUT
-#            echo BUILD_NUMBER="1" >> $GITHUB_ENV
-#          fi
-#        shell: bash
-#      - name: Push tag to Repository
-#        run: |
-#          git config --global user.name "Automated User"
-#          git config --global user.email "automateduser@mindlogger"
-#          git tag ${{ steps.tag.outputs.tag_value }}
-#          git push origin ${{ steps.tag.outputs.tag_value }}
-#
-#      - name: Generate Release Notes
-#        run: |
-#          RELEASE_NOTES=$(gh api \
-#          --method POST \
-#          -H "Accept: application/vnd.github+json" \
-#          -H "X-GitHub-Api-Version: 2022-11-28" \
-#          /repos/${{ github.repository }}/releases/generate-notes \
-#          -f "tag_name=${{ steps.tag.outputs.tag_value }}" -f "target_commitish=${{ github.ref }}" -f "previous_tag_name=${{ env.LATEST_RELEASE }}" | jq -r .'body' | sed 's/\\n/\n/g')
-#
-#          gh api \
-#          --method POST \
-#          -H "Accept: application/vnd.github+json" \
-#          -H "X-GitHub-Api-Version: 2022-11-28" \
-#          /repos/${{ github.repository }}/releases \
-#          -f "tag_name=${{ steps.tag.outputs.tag_value }}" -f "target_commitish=${{ github.ref }}" -f "name=Release Candidate #${{ env.BUILD_NUMBER }} (${{ env.RELEASE_BRANCH }})" -f "body=$RELEASE_NOTES" -F "prerelease=true"
-#        env:
-#          GH_TOKEN: ${{ github.token }}
-#
-#  App_Build:
-#    name: Release Candidate
-#    uses: ./.github/workflows/build_push.yaml
-#    needs: Tagging
+  tag:
+    runs-on: ubuntu-latest
+    needs: should-run
+    outputs:
+      tag: ${{ steps.tag.outputs.current }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Get RC Version
+        id: tag
+        run: |
+          echo "current=$(echo '${{ github.event.pull_request.head.ref }}' | sed 's:.*/::')" >> $GITHUB_OUTPUT
+      - name: Push tag to Repository
+        run: |
+          git config --global user.name "Automated User"
+          git config --global user.email "automateduser@mindlogger"
+          git tag ${{ steps.tag.outputs.current }}
+          git push origin refs/tags/${{ steps.tag.outputs.current }}
+
+  build:
+    name: Build Release Candidate
+    runs-on: ubuntu-latest
+    #    uses: ./.github/workflows/build_push.yaml
+    needs: tag
 #    with:
-#      tag: ${{ needs.Tagging.outputs.tag_value }}
-#
-#  Deploy:
-#    needs: App_Build
-#    runs-on: ubuntu-latest
-#    steps:
-#      - name: configure aws credentials
-#        uses: aws-actions/configure-aws-credentials@v4
-#        with:
-#          role-to-assume: arn:aws:iam::641513112151:role/cmiml-dev-oidc-github-role
-#          role-session-name: OIDC-GHA-session
-#          aws-region: us-east-1
-#
-#      - name: Download task definition
-#        run: |
-#          aws ecs describe-task-definition --task-definition report_server --query taskDefinition > task-definition.json
-#
-#      - name: Render Amazon ECS task definition
-#        id: task-def
-#        uses: aws-actions/amazon-ecs-render-task-definition@v1
-#        with:
-#          task-definition: task-definition.json
-#          container-name: report_server
-#          image: ${{ needs.App_Build.outputs.image }}
-#
-#      - name: Update Task Definition
-#        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
-#        with:
-#          task-definition: ${{ steps.task-def.outputs.task-definition }}
-#          service: report-server
-#          cluster: cmiml-uat
-#          wait-for-service-stability: true
+#      tag: ${{ needs.tag.outputs.tag }}
+    steps:
+      - name: Build
+        run: echo "Building..."
+
+  deploy:
+    name: Deploy
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: main
+      - name: Deploy Release Candidate
+        run: echo "Deploy"
+
+  create-release:
+    name: Publish Release Candidate
+    needs: [tag, deploy]
+    if: ${{ !cancelled() && needs.deploy.result == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create Release
+        run: |
+          gh release create ${{ needs.tag.outputs.tag }} --title "${{ needs.tag.outputs.tag }}" --target main --generate-notes --prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+  slack-notify:
+    name: Notify slack
+    needs: [tag, deploy]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get JIRA issues
+        run: |
+          tickets=$(gh release view ${{ needs.tag.outputs.tag }} --json body | jq -r .body | grep -io 'M2-[0-9]\+' | tr '[:lower:]' '[:upper:]' | sort | uniq | tr '\n' ' ')
+          
+          if [ -z "$tickets" ]; then
+              echo "No Jira tickets found in the release."
+          else
+              echo "Jira ticket numbers found: ${tickets}"
+                file="jira-tickets.json"
+                echo "{ \"issues\": $(echo "${tickets}" | jq -R -s -c 'split(" ")[:-1]') }" > "${file}"
+                echo "Jira ticket numbers saved to ${file}"
+              fi
+          fi
+      # TODO Send issue list to #release-communications

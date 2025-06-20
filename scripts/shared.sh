@@ -11,6 +11,8 @@ getReleaseVersion() {
   LATEST_TAG=$(gh release list --exclude-drafts --exclude-pre-releases --json tagName,isLatest | jq -r '.[] | select(.isLatest == true) | .tagName')
   TAG_LIST=($(echo "$LATEST_TAG" | tr '.' ' '))
 
+  echo $LATEST_TAG
+
   # 2. Exit if invalid version
   [[ "${#TAG_LIST[@]}" -ne 3 ]] && echo "$LATEST_TAG is not a valid version" && exit 1
 

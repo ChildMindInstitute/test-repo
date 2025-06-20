@@ -9,8 +9,8 @@ getRCVersion() {
   # 1. Create array based on LATEST_TAG
   LATEST_TAG=$(gh release list --json tagName,isLatest | jq -r '[.[] | select(.isLatest == false)][0].tagName')
 
-#  NEXT_RELEASE="2025.06.0"
-#  LATEST_TAG="2025.06.0-rc2"
+  NEXT_RELEASE="2025.06.0"
+  LATEST_TAG="2025.06.0-rc2"
 
   RC_TAG=($(echo "${LATEST_TAG}" | tr '-' ' '))
   NEXT_RC=${RC_TAG[0]}
@@ -42,8 +42,8 @@ gh auth status
 
 message ">>> Pulling develop"
 git pull origin develop ##
-#message ">>> Pulling tags"
-#git fetch --prune --prune-tags origin
+message ">>> Pulling tags"
+git fetch --prune --prune-tags origin
 
 getReleaseVersion
 getRCVersion "${RELEASE_VERSION}"
@@ -51,7 +51,7 @@ getRCVersion "${RELEASE_VERSION}"
 message ">>> Release: ${RC_VERSION}"
 
 # 5. Start release
-read -r -p "Last release version was '$RELEASE_VERSION', last RC was '$PREVIOUS_RC', do you want to create '$RC_VERSION' [Y/n]:  " RESPONSE
+read -r -p "Next release version is '$RELEASE_VERSION', last RC was '$PREVIOUS_RC', do you want to create '$RC_VERSION' [Y/n]:  " RESPONSE
 if [[ $RESPONSE =~ ^([yY][eE][sS]|[yY])$ ]]; then
 
   BRANCH_NAME="release/$RC_VERSION"
@@ -59,7 +59,7 @@ if [[ $RESPONSE =~ ^([yY][eE][sS]|[yY])$ ]]; then
 
   git checkout -b "$BRANCH_NAME" develop
   git push origin "$BRANCH_NAME"
-  gh pr create --base main --head "$BRANCH_NAME" --title "Release - $RC_VERSION" --fill
+  gh pr create --base main --head "$BRANCH_NAME" --title "Release - $RC_VERSION"
 
 else
     message "Action cancelled exiting..."
