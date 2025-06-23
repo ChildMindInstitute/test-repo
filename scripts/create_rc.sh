@@ -61,7 +61,8 @@ message ">>> Release: ${RC_VERSION}"
 read -r -p "Next release version is '$RELEASE_VERSION', last RC was '$PREVIOUS_RC', do you want to create '$RC_VERSION' [Y/n]:  " RESPONSE
 if [[ $RESPONSE =~ ^([yY][eE][sS]|[yY])$ ]]; then
 
-  RELEASE_BRANCH="release/$RELEASE_VERSION"
+  RELEASE_BRANCH="release/${RELEASE_VERSION}"
+  RC_TAG="release/${RC_VERSION}"
 
   # Check for the release branch
   if git ls-remote --heads origin "${RELEASE_BRANCH}" | grep -q .; then
@@ -72,7 +73,10 @@ if [[ $RESPONSE =~ ^([yY][eE][sS]|[yY])$ ]]; then
 #    git push origin "$RELEASE_BRANCH"
   fi
 
-
+  # Creation of the RC tag triggers the build and will then create a release
+  message ">>> Creating RC tag"
+  git tag "${RC_TAG}"
+  git push origin refs/tags/"${RC_TAG}"
 
 #  message ">>> Creating RC Pull Request"
 #  gh pr create --base main --head "${RELEASE_BRANCH}" --title "Release - $RC_VERSION"

@@ -2,13 +2,13 @@
 name: Create Release Candidate
 on:
 #  workflow_dispatch: {}
-#  push:
-#    tags:
-#      - "*-rc[0-9]+"
-  pull_request:
-    types: [ opened, synchronize, reopened ]
-    branches:
+  push:
+    tags:
       - "*-rc[0-9]+"
+#  pull_request:
+#    types: [ opened, synchronize, reopened ]
+#    branches:
+#      - "*-rc[0-9]+"
 #    branches: [ main ]
 
 permissions:
@@ -26,10 +26,12 @@ concurrency:
 jobs:
   should-run:
     runs-on: ubuntu-latest
-    if: github.event.pull_request.merged == true && (contains(toJSON(github.event.pull_request.head.ref), 'release/') || contains(toJSON(github.event.pull_request.head.ref), 'hotfix/'))
+    # TODO Might not need this check because the tag is filtered at workflow trigger
+    # TODO Also we are not a pull request anymore
+    #if: github.event.pull_request.merged == true && (contains(toJSON(github.event.pull_request.head.ref), 'release/') || contains(toJSON(github.event.pull_request.head.ref), 'hotfix/'))
     steps:
       - run: |
-          if [[ echo '${{ github.event.pull_request.head.ref }}' | grep -E -e '-rc[0-9]+' ]]; then
+          if [[ echo '${{ github.event.ref }}' | grep -E -e '-rc[0-9]+' ]]; then
             echo "Branch is valid to deploy a release candidate. Proceeding ..."
           else
             echo "Branch does not match release candidate branch pattern."
@@ -73,14 +75,16 @@ jobs:
       - name: Get RC Version
         id: tag
         run: |
-          echo "current=$(echo '${{ github.event.pull_request.head.ref }}' | sed 's:.*/::')" >> $GITHUB_OUTPUT
+#          echo "current=$(echo '${{ github.event.pull_request.head.ref }}' | sed 's:.*/::')" >> $GITHUB_OUTPUT
+          echo "current=${{ github.ref_name }}" >> $GITHUB_OUTPUT
           echo "previous=$(gh release list --exclude-drafts --exclude-pre-releases --json tagName,isLatest | jq -r '.[] | select(.isLatest == true) | .tagName')" >> $GITHUB_OUTPUT
-      - name: Push tag to Repository
-        run: |
-          git config --global user.name "Automated User"
-          git config --global user.email "automateduser@mindlogger"
-          git tag ${{ steps.tag.outputs.current }}
-          git push origin refs/tags/${{ steps.tag.outputs.current }}
+      # Done via the script
+#      - name: Push tag to Repository
+#        run: |
+#          git config --global user.name "Automated User"
+#          git config --global user.email "automateduser@mindlogger"
+#          git tag ${{ steps.tag.outputs.current }}
+#          git push origin refs/tags/${{ steps.tag.outputs.current }}
 
   build:
     name: Build Release Candidate
@@ -106,6 +110,7 @@ jobs:
       - name: Deploy Release Candidate
         run: echo "Deploy"
 
+  # When the RC successfully deploys, create a Github Release
   create-release:
     name: Publish Release Candidate
     needs: [tag, deploy]
