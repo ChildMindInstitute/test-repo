@@ -25,4 +25,6 @@ getReleaseVersion() {
   [[ LAST_MONTH -eq V_MONTH ]] && V_PATCH=$(( TAG_LIST[2] + 1 ))
 
   export RELEASE_VERSION=${V_DATE}.${V_MONTH}.${V_PATCH}
+  PREVIOUS_VERSION="$LATEST_TAG"
+  export PREVIOUS_VERSION
 }

@@ -2,9 +2,14 @@
 name: Create Release Candidate
 on:
 #  workflow_dispatch: {}
+#  push:
+#    tags:
+#      - "*-rc[0-9]+"
   pull_request:
     types: [ opened, synchronize, reopened ]
-    branches: [ main ]
+    branches:
+      - "*-rc[0-9]+"
+#    branches: [ main ]
 
 permissions:
   id-token: write
@@ -57,6 +62,7 @@ jobs:
     needs: should-run
     outputs:
       tag: ${{ steps.tag.outputs.current }}
+      previous: ${{ steps.tag.outputs.previous }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -68,6 +74,7 @@ jobs:
         id: tag
         run: |
           echo "current=$(echo '${{ github.event.pull_request.head.ref }}' | sed 's:.*/::')" >> $GITHUB_OUTPUT
+          echo "previous=$(gh release list --exclude-drafts --exclude-pre-releases --json tagName,isLatest | jq -r '.[] | select(.isLatest == true) | .tagName')" >> $GITHUB_OUTPUT
       - name: Push tag to Repository
         run: |
           git config --global user.name "Automated User"
@@ -107,7 +114,7 @@ jobs:
     steps:
       - name: Create Release
         run: |
-          gh release create ${{ needs.tag.outputs.tag }} --title "${{ needs.tag.outputs.tag }}" --target main --generate-notes --prerelease
+          gh release create ${{ needs.tag.outputs.tag }} --title "${{ needs.tag.outputs.tag }}" --target main --generate-notes --notes-start-tag ${{ needs.tag.outputs.previous }} --prerelease
         env:
           GH_TOKEN: ${{ github.token }}
 
