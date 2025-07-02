@@ -65,13 +65,13 @@ if [[ $RESPONSE =~ ^([yY][eE][sS]|[yY])$ ]]; then
   RC_TAG="release/${RC_VERSION}"
 
   # Check for the release branch
-  if git ls-remote --heads origin "${RELEASE_BRANCH}" | grep -q .; then
-    message ">>> Release Branch '$RELEASE_VERSION' already exists, skipping creation..."
-  else
-    message ">>>>> Creating branch '$RELEASE_BRANCH' from develop..."
+#  if git ls-remote --heads origin "${RELEASE_BRANCH}" | grep -q .; then
+#    message ">>> Release Branch '$RELEASE_VERSION' already exists, skipping creation..."
+#  else
+#    message ">>>>> Creating branch '$RELEASE_BRANCH' from develop..."
 #    git checkout -b "$RELEASE_BRANCH" develop
 #    git push origin "$RELEASE_BRANCH"
-  fi
+#  fi
 
   # Creation of the RC tag triggers the build and will then create a release
   message ">>> Creating RC tag"
