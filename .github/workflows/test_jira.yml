@@ -1,0 +1,20 @@
+name: test_jira.yml
+on:
+  workflow_dispatch:
+
+
+jobs:
+  test-jira:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Send message
+        uses: ChildMindInstitute/slack-notify-action
+        with:
+          status: ${{ job.status }}
+          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          template-file: ./.github/jira-templates/test.json
+          vars: |
+            SERVICE=myapp
+            ENVIRONMENT=production
