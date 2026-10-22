@@ -15,6 +15,6 @@ jobs:
           status: ${{ job.status }}
           webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
           template-file: ./.github/jira-templates/test.json
-          vars: |
+          vars: >-
             SERVICE=myapp
             ENVIRONMENT=production
